@@ -99,6 +99,11 @@ namespace
 
 		return read_adc() >> 2;
 	}
+
+	void __attribute__ ((noinline)) delay()
+	{
+		_delay_ms(3000);
+	}
 } // unnamed namespace
 
 int main()
@@ -111,11 +116,14 @@ int main()
 	for(;;)
 	{
 		reset( led);
-		write_pot( read_pedal());
-		_delay_ms(1000);
+		write_pot( 0);
+		delay();
+
+		write_pot( 255);
+		delay();
 
 		set(led);
-		write_pot( read_pedal());
-		_delay_ms(1000);
+		write_pot( 2*read_pedal());
+		delay();
 	}
 }
