@@ -14,8 +14,8 @@ struct spi_pins {
 	DEFINE_PIN( miso, B, 1);
 	DEFINE_PIN( clk,  B, 2);
 };
-DEFINE_PIN( select_potmeter, B, 3);
-DEFINE_PIN( led, B, 1);
+DEFINE_PIN( select_potmeter, B, 1);
+DEFINE_PIN( led, B, 3);
 
 /// template meta function that, given a cpu frequency and a required maximum frequency, finds a divider (as a power of two) that
 /// will result in the highest result frequency that is at most the given result frequency.
@@ -42,10 +42,12 @@ struct dummy {};
 namespace
 {
 	typedef bitbanged_spi<spi_pins> spi;
-	void write_pot( uint8_t value)
+	void __attribute__ ((noinline)) write_pot( uint8_t value)
 	{
 		reset( select_potmeter);
-		spi::transmit( 0b0001001100000000 | (uint16_t)value);
+		// send command (xx01xx11, 01 = write, 11 = "both potmeters"
+		spi::transmit_receive( (uint8_t)0b00010011);
+		spi::transmit_receive( value);
 		set( select_potmeter);
 	}
 
@@ -90,7 +92,7 @@ namespace
 		return result;
 	}
 
-	uint8_t read_pedal()
+	uint8_t __attribute__ ((noinline)) read_pedal()
 	{
 		start_adc();
 		wait_for_adc_result();
@@ -109,11 +111,11 @@ int main()
 	for(;;)
 	{
 		reset( led);
-		write_pot( 1);
+		write_pot( read_pedal());
 		_delay_ms(1000);
 
 		set(led);
-		write_pot(254);
+		write_pot( read_pedal());
 		_delay_ms(1000);
 	}
 }
