@@ -86,8 +86,7 @@ namespace
 	uint16_t read_adc()
 	{
 		// read ADCL and ADCH in the right order.
-		uint16_t result=0;
-		result = ADCL;
+		uint16_t result= ADCL;
 		result |= (static_cast<uint16_t>( ADCH) << 8);
 		return result;
 	}
@@ -102,7 +101,7 @@ namespace
 
 	void __attribute__ ((noinline)) delay()
 	{
-		_delay_ms(3000);
+		_delay_ms(5000);
 	}
 } // unnamed namespace
 
@@ -115,15 +114,10 @@ int main()
 	make_output( led | select_potmeter);
 	for(;;)
 	{
-		reset( led);
-		write_pot( 0);
-		delay();
+		uint8_t val = read_pedal();
+		if (val > 128) reset( led);
+		else set(led);
 
-		write_pot( 255);
-		delay();
-
-		set(led);
-		write_pot( 2*read_pedal());
-		delay();
+		write_pot( val);
 	}
 }
