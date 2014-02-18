@@ -163,7 +163,7 @@ namespace
 		{
 			// the median is above the midpoint, voltage goes up as pedal goes down.
 			translation_offset = max_raw_value;
-			translation_scale = min_raw_value - max_raw_value + 1; // scale is negative.
+			translation_scale = min_raw_value - max_raw_value - 1; // scale is negative.
 		}
 	}
 
