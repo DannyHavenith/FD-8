@@ -56,6 +56,7 @@ namespace
 	// calibration values.
 	int32_t translation_scale; ///<this is the distance between lowest ever and highest ever value measured. Negative if voltage increases with pedal-down.
 	int16_t translation_offset; ///< this is either the lowest or highest raw value measured, depending on whether voltage goes up or down if pedal goes down.
+	const int16_t scale_cutoff = 6;
 
 	typedef bitbanged_spi<spi_pins> spi;
 
@@ -139,7 +140,7 @@ namespace
 	{
 		reset( select_potmeter); // select_potmeter is active-low.
 		// send command (xx01xx11, 01 = write, 11 = "both potmeters"
-		spi::transmit_receive( (uint8_t)0b00010011);
+		spi::transmit_receive( (uint8_t)0b00010001);
 		spi::transmit_receive( value);
 		set( select_potmeter);
 	}
@@ -158,12 +159,20 @@ namespace
 			// if the median is below the midpoint, we assume that the voltage goes down as the pedal goes down.
 			translation_offset = min_raw_value;
 			translation_scale = max_raw_value - min_raw_value + 1; // scale is positive
+
+			// adapt the range so that the lower 1/8 of the range all registers as '0' (maximum down position)
+			translation_offset -= translation_scale/scale_cutoff;
+			translation_scale -= translation_scale/scale_cutoff;
 		}
 		else
 		{
 			// the median is above the midpoint, voltage goes up as pedal goes down.
 			translation_offset = max_raw_value;
 			translation_scale = min_raw_value - max_raw_value - 1; // scale is negative.
+
+			// adapt the range so that the lower 1/8 of the range all registers as '0' (maximum down position)
+			translation_offset += translation_scale/scale_cutoff;
+			translation_scale += translation_scale/scale_cutoff;
 		}
 	}
 
@@ -190,6 +199,10 @@ namespace
 	{
 		int32_t accumulator = static_cast<int32_t>(static_cast<int16_t>(raw_value)-translation_offset) * 256;
 		accumulator /= translation_scale;
+
+		// the lower part of the range maps onto negative values (see rescale_range() ). All these negative values
+		// are clipped to 0.
+		if (accumulator < 0) accumulator = 0;
 		return accumulator;
 	}
 
@@ -200,7 +213,6 @@ namespace
 	uint8_t  read_scaled_pedal()
 	{
 		uint16_t adcvalue = adc::read();
-
 		note_max_min( adcvalue);
 		return scale_down( adcvalue);
 	}
@@ -234,6 +246,6 @@ int main()
 	{
 		_delay_ms( 1);
 		uint8_t val = read_scaled_pedal();
-		if (val) write_pot( val);
+		write_pot( val);
 	}
 }
