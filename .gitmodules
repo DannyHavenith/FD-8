@@ -1,0 +1,3 @@
+[submodule "avr_utilities_submodule"]
+	path = avr_utilities_submodule
+	url = git@github.com:DannyHavenith/avr_utilities.git
