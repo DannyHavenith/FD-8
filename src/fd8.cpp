@@ -60,8 +60,6 @@ namespace
 
 	typedef bitbanged_spi<spi_pins> spi;
 
-	/// This is not so much a true class as a set of ADC-related functions. All functions are static, we don't want to burden all these
-	/// functions with an extra implicit 'this' argument.
 	class adc
 	{
 	public:
@@ -74,7 +72,7 @@ namespace
 		}
 
 		/// Set up the ADC configuration registers to start sampling from the given channel.
-		static void init(uint8_t channel)
+		void init(uint8_t channel)
 		{
 			// given the clock frequency, determine which power of 2 we need to bring it down to
 			// 200kHz.
@@ -210,22 +208,22 @@ namespace
 	/// Read the ADC value, but use auto-calibration data to scale the value into
 	/// a value in the range 0-255, where 255 represents the highest position of the pedal ever encountered
 	/// and 0 means the lowest position ever encountered.
-	uint8_t  read_scaled_pedal()
+	uint8_t  read_scaled_pedal(adc &adc)
 	{
-		uint16_t adcvalue = adc::read();
+		uint16_t adcvalue = adc.read();
 		note_max_min( adcvalue);
 		return scale_down( adcvalue);
 	}
 
 	/// Read a few values from the ADC and determine first values for min and max ADC values
 	/// to start off the auto calibration.
-	void init_pedal_calibration() {
+	void init_pedal_calibration(adc &adc) {
 		for (uint8_t count = 10; count; --count) {
-			adc::read();
+			adc.read();
 		}
-		max_raw_value = min_raw_value = adc::read();
+		max_raw_value = min_raw_value = adc.read();
 		for (uint8_t count = 10; count; --count) {
-			note_max_min(adc::read());
+			note_max_min(adc.read());
 		}
 		rescale_range();
 	}
@@ -238,14 +236,16 @@ int main()
 
 	set( select_potmeter);
 	spi::init();
-	adc::init( 2);
+
+	adc adc;
+	adc.init( 2);
 	make_output( select_potmeter);
 
-	init_pedal_calibration();
+	init_pedal_calibration(adc);
 	for(;;)
 	{
 		_delay_ms( 1);
-		uint8_t val = read_scaled_pedal();
+		uint8_t val = read_scaled_pedal(adc);
 		write_pot( val);
 	}
 }
