@@ -1,5 +1,7 @@
 #include "adc.h"
 
+#ifndef UNIT_TEST
+
 #include <avr/io.h>
 
 uint16_t NO_INLINE adc::read()
@@ -44,3 +46,17 @@ uint16_t NO_INLINE adc::read_register()
     result |= (static_cast<uint16_t>( ADCH) << 8);
     return result;
 }
+
+#else
+
+uint16_t NO_INLINE adc::read()
+{
+    return 0;
+}
+
+void adc::init(uint8_t channel)
+{
+}
+
+
+#endif
