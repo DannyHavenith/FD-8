@@ -1,3 +1,6 @@
+#ifndef ADC_H_
+#define ADC_H_
+
 #include <stdint.h>
 #include <avr/io.h>
 
@@ -7,29 +10,10 @@ class adc
 {
 public:
     /// Read a raw ADC value.
-    static uint16_t NO_INLINE read()
-    {
-        start();
-        wait_for_result();
-        return read_register();
-    }
+    static uint16_t read();
 
     /// Set up the ADC configuration registers to start sampling from the given channel.
-    void init(uint8_t channel)
-    {
-        // given the clock frequency, determine which power of 2 we need to bring it down to
-        // 200kHz.
-        static const uint8_t div =  divider< F_CPU/1000, 200>::value;
-
-        //set ADMUX, channel, REFS0 = Vcc (0) ADLAR = right adjust (0)
-        ADMUX = (channel & 0x03) << MUX0;
-
-        // set ADC Enable, ADATE none (0), clock div factor
-        ADCSRA = _BV( ADEN) | (div & 0x03);
-
-        ADCSRB = 0;
-
-    }
+    void init(uint8_t channel);
 
 private:
     /// template meta function that, given a cpu frequency and a required maximum frequency, finds a divider (as a power of two) that
@@ -52,26 +36,56 @@ private:
     };
 
     /// Tell the ADC component to start measurement.
-    static void start()
-    {
-        // set ADSC in ADCSRA
-        ADCSRA |= _BV( ADSC);
-    }
+    static void start();
 
     /// Wait until the ADC has finished its measurement
-    static void wait_for_result()
-    {
-        // wait--spinlock--for the ADSC bit to become zero again.
-        while( (ADCSRA & _BV(ADSC)));
-    }
+    static void wait_for_result();
 
     /// read the ADC register.
-    static uint16_t NO_INLINE read_register()
-    {
-        // read ADCL and ADCH in the right order.
-        uint16_t result= ADCL;
-        result |= (static_cast<uint16_t>( ADCH) << 8);
-        return result;
-    }
+    static uint16_t read_register();
 
 };
+
+uint16_t NO_INLINE adc::read()
+{
+    start();
+    wait_for_result();
+    return read_register();
+}
+
+void adc::init(uint8_t channel)
+{
+    // given the clock frequency, determine which power of 2 we need to bring it down to
+    // 200kHz.
+    static const uint8_t div =  divider< F_CPU/1000, 200>::value;
+
+    //set ADMUX, channel, REFS0 = Vcc (0) ADLAR = right adjust (0)
+    ADMUX = (channel & 0x03) << MUX0;
+
+    // set ADC Enable, ADATE none (0), clock div factor
+    ADCSRA = _BV( ADEN) | (div & 0x03);
+
+    ADCSRB = 0;
+
+}
+
+void adc::start()
+{
+    // set ADSC in ADCSRA
+    ADCSRA |= _BV( ADSC);
+}
+
+void adc::wait_for_result()
+{
+    // wait--spinlock--for the ADSC bit to become zero again.
+    while( (ADCSRA & _BV(ADSC)));
+}
+
+uint16_t NO_INLINE adc::read_register()
+{
+    // read ADCL and ADCH in the right order.
+    uint16_t result= ADCL;
+    result |= (static_cast<uint16_t>( ADCH) << 8);
+    return result;
+}
+#endif // ADC_H_
