@@ -14,6 +14,10 @@ public:
     /// Set up the ADC configuration registers to start sampling from the given channel.
     void init(uint8_t channel);
 
+#ifdef UNIT_TEST
+    void test_set(uint16_t value);
+#endif
+
 private:
     /// template meta function that, given a cpu frequency and a required maximum frequency, finds a divider (as a power of two) that
     /// will result in the highest result frequency that is at most the given result frequency.
@@ -33,6 +37,10 @@ private:
         // try a higher divider (power of two).
         static const uint8_t value = divider<cpu_khz, max_khz, (proposed + 1)>::value;
     };
+
+#ifdef UNIT_TEST
+    uint16_t test_value;
+#endif
 
     /// Tell the ADC component to start measurement.
     void start();
