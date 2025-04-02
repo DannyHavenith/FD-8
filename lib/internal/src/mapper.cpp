@@ -29,7 +29,7 @@ void NO_INLINE PedalMapper::rescale_range()
 
 		// adapt the range so that the lower 1/8 of the range all registers as '0' (maximum down position)
 		translation_offset -= translation_scale/scale_cutoff;
-		translation_scale -= translation_scale/scale_cutoff;
+		translation_scale += translation_scale/scale_cutoff;
 	}
 	else
 	{
