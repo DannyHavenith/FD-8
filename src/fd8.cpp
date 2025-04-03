@@ -88,25 +88,24 @@ void dump_to_spi(int32_t value)
 	dump_to_spi(static_cast<uint32_t>(value));
 }
 
-struct SpiPedalDumper : PedalMapperListener {
-	virtual void onRawAdcValue(uint16_t adcValue) {
+struct SpiPedalDumper {
+	void onRawAdcValue(uint16_t adcValue) {
 		dump_to_spi(adcValue);
 	};
 
-	virtual void onCalibrationSet(int16_t minRawValue, int16_t maxRawValue, int32_t translationScale, int16_t translationOffset) {
+	void onCalibrationSet(int16_t minRawValue, int16_t maxRawValue, int32_t translationScale, int16_t translationOffset) {
 		dump_to_spi(minRawValue);
 		dump_to_spi(maxRawValue);
 		dump_to_spi(translationScale);
 		dump_to_spi(translationOffset);
 	}
 
-	virtual void onMapped(int32_t value) {
+	void onMapped(int32_t value) {
 		dump_to_spi(value);
 	}
 };
 
-NullListener mapperListener;
-// SpiPedalDumper mapperListener;
+SpiPedalDumper mapperListener;
 
 int main()
 {
@@ -120,7 +119,8 @@ int main()
 	adc.init( 2);
 	make_output( select_potmeter);
 
-	PedalMapper mapper(mapperListener);
+	PedalMapper<> mapper;
+	// PedalMapper<SpiPedalDumper> mapper(mapperListener);
 
 	mapper.init_pedal_calibration(adc);
 	for(;;)

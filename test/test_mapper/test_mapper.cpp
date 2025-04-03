@@ -3,7 +3,7 @@
 #include "mapper.h"
 
 adc adc;
-PedalMapper mapper;
+PedalMapper<> mapper;
 
 void setUp(void) {
 }
