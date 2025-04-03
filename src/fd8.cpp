@@ -62,6 +62,52 @@ namespace
 } // unnamed namespace
 
 
+void dump_to_spi(uint16_t value) {
+	reset( select_potmeter);
+	spi::transmit_receive( static_cast<uint8_t>(value >> 8));
+	spi::transmit_receive( static_cast<uint8_t>(value & 0xff));
+	set( select_potmeter);
+}
+
+void dump_to_spi(uint32_t value) {
+	reset( select_potmeter);
+	spi::transmit_receive( static_cast<uint8_t>( value >> 24));
+	spi::transmit_receive( static_cast<uint8_t>((value >> 16) & 0xff));
+	spi::transmit_receive( static_cast<uint8_t>((value >> 8)  & 0xff));
+	spi::transmit_receive( static_cast<uint8_t>( value        & 0xff));
+	set( select_potmeter);
+}
+
+void dump_to_spi(int16_t value)
+{ 
+	dump_to_spi(static_cast<uint16_t>(value));
+}
+
+void dump_to_spi(int32_t value)
+{ 
+	dump_to_spi(static_cast<uint32_t>(value));
+}
+
+struct SpiPedalDumper : PedalMapperListener {
+	virtual void onRawAdcValue(uint16_t adcValue) {
+		dump_to_spi(adcValue);
+	};
+
+	virtual void onCalibrationSet(int16_t minRawValue, int16_t maxRawValue, int32_t translationScale, int16_t translationOffset) {
+		dump_to_spi(minRawValue);
+		dump_to_spi(maxRawValue);
+		dump_to_spi(translationScale);
+		dump_to_spi(translationOffset);
+	}
+
+	virtual void onMapped(int32_t value) {
+		dump_to_spi(value);
+	}
+};
+
+NullListener mapperListener;
+// SpiPedalDumper mapperListener;
+
 int main()
 {
 	make_output(debug);
@@ -74,7 +120,7 @@ int main()
 	adc.init( 2);
 	make_output( select_potmeter);
 
-	PedalMapper mapper;
+	PedalMapper mapper(mapperListener);
 
 	mapper.init_pedal_calibration(adc);
 	for(;;)

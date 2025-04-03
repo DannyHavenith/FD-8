@@ -4,8 +4,23 @@
 #include "adc.h"
 #include <stdint.h>
 
+struct PedalMapperListener {
+	virtual void onRawAdcValue(uint16_t adcValue) = 0;
+	virtual void onCalibrationSet(int16_t minRawValue, int16_t maxRawValue, int32_t translationScale, int16_t translationOffset) = 0;
+	virtual void onMapped(int32_t value) = 0;
+};
+
+struct NullListener : PedalMapperListener {
+	virtual void onRawAdcValue(uint16_t) {};
+	virtual void onCalibrationSet(int16_t, int16_t, int32_t, int16_t) {};
+	virtual void onMapped(int32_t value) {};
+};
+extern NullListener nullListener;
+
 class PedalMapper {
 public:
+	PedalMapper(PedalMapperListener &listener = nullListener) : listener(listener) { }
+
 	/// Read a few values from the ADC and determine first values for min and max ADC values
 	/// to start off the auto calibration.
 	void init_pedal_calibration(adc &adc);
@@ -16,6 +31,8 @@ public:
 	uint8_t read_scaled_pedal(adc &adc);
 
 private:
+	PedalMapperListener &listener;
+
     // the following globals are not initialized on purpose to save a few bytes of code space.
 
 	/// maximum value received from adc. This is used to scale the output.

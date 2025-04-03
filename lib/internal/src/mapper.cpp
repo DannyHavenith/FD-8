@@ -4,6 +4,8 @@
 
 #define NO_INLINE __attribute__ ((noinline))
 
+NullListener nullListener;
+
 void PedalMapper::init_pedal_calibration(adc &adc) {
 	for (uint8_t count = 10; count; --count) {
 		adc.read();
@@ -55,6 +57,7 @@ void PedalMapper::note_max_min( int16_t raw_value)
 		max_raw_value = raw_value;
 		rescale_range();
 	}
+	listener.onCalibrationSet(min_raw_value, max_raw_value, translation_scale, translation_offset);
 }
 
 uint8_t PedalMapper::scale_down( uint16_t raw_value)
@@ -65,6 +68,7 @@ uint8_t PedalMapper::scale_down( uint16_t raw_value)
 	// the lower part of the range maps onto negative values (see rescale_range() ). All these negative values
 	// are clipped to 0.
 	if (accumulator < 0) accumulator = 0;
+	listener.onMapped(accumulator);
 	return accumulator;
 }
 
@@ -72,6 +76,7 @@ uint8_t PedalMapper::scale_down( uint16_t raw_value)
 uint8_t PedalMapper::read_scaled_pedal(adc &adc)
 {
 	uint16_t adcvalue = adc.read();
+	listener.onRawAdcValue(adcvalue);
 	note_max_min( adcvalue);
 	return scale_down( adcvalue);
 }
