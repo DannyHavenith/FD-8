@@ -1,0 +1,21 @@
+{
+    "name": "avr_utilities",
+    "version": "1.0.0",
+    "description": "A collection of utility functions for AVR microcontrollers.",
+    "keywords": ["avr", "utilities", "embedded", "microcontroller"],
+    "authors": [
+      {
+        "name": "Danny Havenith"
+      }
+    ],
+    "homepage": "https://github.com/DannyHavenith/avr_utilities",
+    "repository": {
+      "type": "git",
+      "url": "https://github.com/DannyHavenith/avr_utilities.git"
+    },
+    "platforms": ["atmelavr"],
+    "build": {
+      "includeDir": "../../avr_utilities_submodule"
+    }
+}
+  
