@@ -55,7 +55,7 @@ namespace
 	{
 		reset( select_potmeter); // select_potmeter is active-low.
 		// send command (xx01xx11, 01 = write, 11 = "both potmeters"
-		spi::transmit_receive( (uint8_t)0b00010001);
+		spi::transmit_receive( (uint8_t)0b00010011);
 		spi::transmit_receive( value);
 		set( select_potmeter);
 	}
