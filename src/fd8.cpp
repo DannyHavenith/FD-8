@@ -81,5 +81,10 @@ int main()
 		write_pot( val);
 	}
 }
+#else
+
+// minimal main() required for linking in native environment
+// (when unit-testing, PIO uses main() in tests)
+int main() { }
 
 #endif // UNIT_TEST
