@@ -60,6 +60,8 @@ namespace
 		set( select_potmeter);
 	}
 
+	/// Write a generic 16-bit value to spi using the same select line as the digital potentiometer.
+	/// To be used for debugging only, i.e. with no digipot connected.
 	void dump_to_spi(uint16_t value) {
 		reset( select_potmeter);
 		spi::transmit_receive( static_cast<uint8_t>(value >> 8));
@@ -67,6 +69,8 @@ namespace
 		set( select_potmeter);
 	}
 	
+	/// Write a generic 32-bit value to spi using the same select line as the digital potentiometer.
+	/// To be used for debugging only, i.e. with no digipot connected.
 	void dump_to_spi(uint32_t value) {
 		reset( select_potmeter);
 		spi::transmit_receive( static_cast<uint8_t>( value >> 24));
@@ -85,7 +89,8 @@ namespace
 	{ 
 		dump_to_spi(static_cast<uint32_t>(value));
 	}
-	
+
+	/// A PedalMapper Listener-compatible struct that dumps all listenable values to SPI.
 	struct SpiPedalDumper {
 		void onRawAdcValue(uint16_t adcValue) {
 			dump_to_spi(adcValue);
