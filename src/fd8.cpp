@@ -59,51 +59,52 @@ namespace
 		spi::transmit_receive( value);
 		set( select_potmeter);
 	}
+
+	void dump_to_spi(uint16_t value) {
+		reset( select_potmeter);
+		spi::transmit_receive( static_cast<uint8_t>(value >> 8));
+		spi::transmit_receive( static_cast<uint8_t>(value & 0xff));
+		set( select_potmeter);
+	}
+	
+	void dump_to_spi(uint32_t value) {
+		reset( select_potmeter);
+		spi::transmit_receive( static_cast<uint8_t>( value >> 24));
+		spi::transmit_receive( static_cast<uint8_t>((value >> 16) & 0xff));
+		spi::transmit_receive( static_cast<uint8_t>((value >> 8)  & 0xff));
+		spi::transmit_receive( static_cast<uint8_t>( value        & 0xff));
+		set( select_potmeter);
+	}
+	
+	void dump_to_spi(int16_t value)
+	{ 
+		dump_to_spi(static_cast<uint16_t>(value));
+	}
+	
+	void dump_to_spi(int32_t value)
+	{ 
+		dump_to_spi(static_cast<uint32_t>(value));
+	}
+	
+	struct SpiPedalDumper {
+		void onRawAdcValue(uint16_t adcValue) {
+			dump_to_spi(adcValue);
+		};
+	
+		void onCalibrationSet(int16_t minRawValue, int16_t maxRawValue, int32_t translationScale, int16_t translationOffset) {
+			dump_to_spi(minRawValue);
+			dump_to_spi(maxRawValue);
+			dump_to_spi(translationScale);
+			dump_to_spi(translationOffset);
+		}
+	
+		void onMapped(int32_t value) {
+			dump_to_spi(value);
+		}
+	};
+	
 } // unnamed namespace
 
-
-void dump_to_spi(uint16_t value) {
-	reset( select_potmeter);
-	spi::transmit_receive( static_cast<uint8_t>(value >> 8));
-	spi::transmit_receive( static_cast<uint8_t>(value & 0xff));
-	set( select_potmeter);
-}
-
-void dump_to_spi(uint32_t value) {
-	reset( select_potmeter);
-	spi::transmit_receive( static_cast<uint8_t>( value >> 24));
-	spi::transmit_receive( static_cast<uint8_t>((value >> 16) & 0xff));
-	spi::transmit_receive( static_cast<uint8_t>((value >> 8)  & 0xff));
-	spi::transmit_receive( static_cast<uint8_t>( value        & 0xff));
-	set( select_potmeter);
-}
-
-void dump_to_spi(int16_t value)
-{ 
-	dump_to_spi(static_cast<uint16_t>(value));
-}
-
-void dump_to_spi(int32_t value)
-{ 
-	dump_to_spi(static_cast<uint32_t>(value));
-}
-
-struct SpiPedalDumper {
-	void onRawAdcValue(uint16_t adcValue) {
-		dump_to_spi(adcValue);
-	};
-
-	void onCalibrationSet(int16_t minRawValue, int16_t maxRawValue, int32_t translationScale, int16_t translationOffset) {
-		dump_to_spi(minRawValue);
-		dump_to_spi(maxRawValue);
-		dump_to_spi(translationScale);
-		dump_to_spi(translationOffset);
-	}
-
-	void onMapped(int32_t value) {
-		dump_to_spi(value);
-	}
-};
 
 SpiPedalDumper mapperListener;
 
