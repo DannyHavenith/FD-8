@@ -51,12 +51,15 @@ uint16_t NO_INLINE adc::read_register()
 
 uint16_t NO_INLINE adc::read()
 {
-    return 0;
+    return test_value;
 }
 
 void adc::init(uint8_t channel)
 {
 }
 
+void adc::test_set(uint16_t value) {
+    test_value = value;
+}
 
 #endif

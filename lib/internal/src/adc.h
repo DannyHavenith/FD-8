@@ -9,10 +9,14 @@ class adc
 {
 public:
     /// Read a raw ADC value.
-    static uint16_t read();
+    uint16_t read();
 
     /// Set up the ADC configuration registers to start sampling from the given channel.
     void init(uint8_t channel);
+
+#ifdef UNIT_TEST
+    void test_set(uint16_t value);
+#endif
 
 private:
     /// template meta function that, given a cpu frequency and a required maximum frequency, finds a divider (as a power of two) that
@@ -34,14 +38,18 @@ private:
         static const uint8_t value = divider<cpu_khz, max_khz, (proposed + 1)>::value;
     };
 
+#ifdef UNIT_TEST
+    uint16_t test_value;
+#endif
+
     /// Tell the ADC component to start measurement.
-    static void start();
+    void start();
 
     /// Wait until the ADC has finished its measurement
-    static void wait_for_result();
+    void wait_for_result();
 
     /// read the ADC register.
-    static uint16_t read_register();
+    uint16_t read_register();
 
 };
 

@@ -29,7 +29,7 @@ private:
 	// calibration values.
 	int32_t translation_scale; ///<this is the distance between lowest ever and highest ever value measured. Negative if voltage increases with pedal-down.
 	int16_t translation_offset; ///< this is either the lowest or highest raw value measured, depending on whether voltage goes up or down if pedal goes down.
-	const int16_t scale_cutoff = 6;
+	static const int16_t scale_cutoff = 6;
 
 	/// From the maximum and minimum measured ADC values determine:
 	/// * the direction of the pedal (whether the voltage goes up or down when the pedal is depressed).
