@@ -37,6 +37,9 @@
 
 #define NO_INLINE __attribute__ ((noinline))
 
+// Uncomment this to enable mapper debugging via SPI.
+//#define DEBUG_MAPPER
+
 /// This struct defines which pins are used by the bit banging spi device
 struct spi_pins {
 	DEFINE_PIN( mosi, B, 0);
@@ -111,8 +114,6 @@ namespace
 } // unnamed namespace
 
 
-SpiPedalDumper mapperListener;
-
 int main()
 {
 	make_output(debug);
@@ -125,8 +126,12 @@ int main()
 	adc.init( 2);
 	make_output( select_potmeter);
 
+#ifndef DEBUG_MAPPER
 	PedalMapper<> mapper;
-	// PedalMapper<SpiPedalDumper> mapper(mapperListener);
+#else
+	SpiPedalDumper mapperListener;
+	PedalMapper<SpiPedalDumper> mapper(mapperListener);
+#endif
 
 	mapper.init_pedal_calibration(adc);
 	for(;;)

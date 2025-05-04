@@ -4,9 +4,23 @@
 #include "adc.h"
 #include <stdint.h>
 
+/// Defines how a listener of mapper events should look like.
+/// Users that want to listen to such events can define their own class with the
+/// same function prototypes. It doesn't need to be derived from this one, since
+/// the listener is applied as a template parameter.
 struct NullListener {
+	/// Callback invoked with an ADC value that has just been read.
 	void onRawAdcValue(uint16_t adcValue) const {}
+
+	/// Callback invoked when the calibration parameters have been changed.
+	/// - minRawValue: lowest expected ADC value
+	/// - maxRawValue: highest expected ADC value
+	/// - translationScale: scale to be applied to the ADC value
+	/// - translationOffset: offset to be applied after scaling
 	void onCalibrationSet(int16_t minRawValue, int16_t maxRawValue, int32_t translationScale, int16_t translationOffset) const {}
+	
+	/// Callback invoked when the mapping is completed, just before conversion
+	/// to 8-bit. This can help troubleshooting conversion issues to 8 bits.
 	void onMapped(int32_t value) const {}
 };
 
@@ -40,6 +54,7 @@ public:
 	}
 
 private:
+	/// instance of the listener for the internal mapping tasks.
 	Listener listener;
 
     // the following globals are not initialized on purpose to save a few bytes of code space.
