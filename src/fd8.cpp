@@ -37,6 +37,9 @@
 
 #define NO_INLINE __attribute__ ((noinline))
 
+// Uncomment this to enable mapper debugging via SPI.
+//#define DEBUG_MAPPER
+
 /// This struct defines which pins are used by the bit banging spi device
 struct spi_pins {
 	DEFINE_PIN( mosi, B, 0);
@@ -44,6 +47,7 @@ struct spi_pins {
 	DEFINE_PIN( clk,  B, 2);
 };
 DEFINE_PIN( select_potmeter, B, 1);
+DEFINE_PIN(debug, B, 3);
 
 namespace
 {
@@ -54,15 +58,66 @@ namespace
 	{
 		reset( select_potmeter); // select_potmeter is active-low.
 		// send command (xx01xx11, 01 = write, 11 = "both potmeters"
-		spi::transmit_receive( (uint8_t)0b00010001);
+		spi::transmit_receive( (uint8_t)0b00010011);
 		spi::transmit_receive( value);
 		set( select_potmeter);
 	}
+
+	/// Write a generic 16-bit value to spi using the same select line as the digital potentiometer.
+	/// To be used for debugging only, i.e. with no digipot connected.
+	void dump_to_spi(uint16_t value) {
+		reset( select_potmeter);
+		spi::transmit_receive( static_cast<uint8_t>(value >> 8));
+		spi::transmit_receive( static_cast<uint8_t>(value & 0xff));
+		set( select_potmeter);
+	}
+	
+	/// Write a generic 32-bit value to spi using the same select line as the digital potentiometer.
+	/// To be used for debugging only, i.e. with no digipot connected.
+	void dump_to_spi(uint32_t value) {
+		reset( select_potmeter);
+		spi::transmit_receive( static_cast<uint8_t>( value >> 24));
+		spi::transmit_receive( static_cast<uint8_t>((value >> 16) & 0xff));
+		spi::transmit_receive( static_cast<uint8_t>((value >> 8)  & 0xff));
+		spi::transmit_receive( static_cast<uint8_t>( value        & 0xff));
+		set( select_potmeter);
+	}
+	
+	void dump_to_spi(int16_t value)
+	{ 
+		dump_to_spi(static_cast<uint16_t>(value));
+	}
+	
+	void dump_to_spi(int32_t value)
+	{ 
+		dump_to_spi(static_cast<uint32_t>(value));
+	}
+
+	/// A PedalMapper Listener-compatible struct that dumps all listenable values to SPI.
+	struct SpiPedalDumper {
+		void onRawAdcValue(uint16_t adcValue) {
+			dump_to_spi(adcValue);
+		};
+	
+		void onCalibrationSet(int16_t minRawValue, int16_t maxRawValue, int32_t translationScale, int16_t translationOffset) {
+			dump_to_spi(minRawValue);
+			dump_to_spi(maxRawValue);
+			dump_to_spi(translationScale);
+			dump_to_spi(translationOffset);
+		}
+	
+		void onMapped(int32_t value) {
+			dump_to_spi(value);
+		}
+	};
+	
 } // unnamed namespace
 
 
 int main()
 {
+	make_output(debug);
+	set(debug);
 
 	set( select_potmeter);
 	spi::init();
@@ -71,14 +126,21 @@ int main()
 	adc.init( 2);
 	make_output( select_potmeter);
 
-	PedalMapper mapper;
+#ifndef DEBUG_MAPPER
+	PedalMapper<> mapper;
+#else
+	SpiPedalDumper mapperListener;
+	PedalMapper<SpiPedalDumper> mapper(mapperListener);
+#endif
 
 	mapper.init_pedal_calibration(adc);
 	for(;;)
 	{
 		_delay_ms( 1);
+		reset(debug);
 		uint8_t val = mapper.read_scaled_pedal(adc);
 		write_pot( val);
+		set(debug);
 	}
 }
 #else
